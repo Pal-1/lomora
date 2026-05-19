@@ -1,6 +1,9 @@
 import type { VideoOutput } from './types'
 
-const SYSTEM_PROMPT = `You are LUMORA, a world-class AI cinematic video production system. Return ONLY a raw JSON object — no markdown, no backticks, no explanation whatsoever. Use exactly this structure:
+const SYSTEM_PROMPT = `You are LUMORA, a world-class AI cinematic video production system. 
+Return ONLY a raw JSON object — no markdown, no backticks, no explanation. 
+Use exactly this structure:
+
 {
   "title": "string",
   "logline": "string under 30 words",
@@ -14,7 +17,7 @@ const SYSTEM_PROMPT = `You are LUMORA, a world-class AI cinematic video producti
     { "title": "string", "location": "string", "time": "string", "duration": "timestamp range e.g. 00:00-02:30", "description": "2-3 sentences", "characters": ["names"], "mood": "keyword" }
   ],
   "script": [
-    { "type": "SCENE HEADING or ACTION or NARRATION or DIALOGUE", "speaker": "only include for DIALOGUE", "text": "string" }
+    { "type": "SCENE HEADING or ACTION or NARRATION or DIALOGUE", "speaker": "only for DIALOGUE", "text": "string" }
   ],
   "shots": [
     { "code": "SHOT TYPE e.g. ECU / WS / OTS", "description": "string" }
@@ -24,51 +27,61 @@ const SYSTEM_PROMPT = `You are LUMORA, a world-class AI cinematic video producti
   ],
   "publishingTip": "2-3 sentences"
 }
-Rules: 6-8 scenes. Script covers first 3 minutes with 8-12 blocks. 8-10 shots. 2-4 characters. 6 monetization items. Make it genuinely cinematic and professional.`
+
+Rules: 6-8 scenes, script for first 3 minutes (8-12 blocks), 8-10 shots, 2-4 characters. Make it cinematic and professional.`;
 
 export async function generateVideoPackage(
   storyPrompt: string,
   genre: string,
   duration: string,
   mood: string,
+  apiKey: string
 ): Promise<VideoOutput> {
-  const apiKey = import.meta.env.VITE_ANTHROPIC_API_KEY as string
-
-  if (!apiKey || apiKey.trim() === '' || apiKey === 'sk-ant-your-key-here') {
-    throw new Error('Open the .env file and replace sk-ant-your-key-here with your real Anthropic API key, then restart the dev server.')
+  
+  if (!apiKey || apiKey.length < 20) {
+    throw new Error('Please enter a valid Groq API key')
   }
 
-  const response = await fetch('/api/anthropic/v1/messages', {
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'x-api-key': apiKey,
-      'anthropic-version': '2023-06-01',
+      'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 4000,
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: `Story: ${storyPrompt}\nGenre: ${genre}\nDuration: ${duration}\nMood: ${mood}\n\nGenerate the full cinematic video production package.` }]
+      model: 'llama-3.3-70b-versatile',     // Best balance for creative cinematic output
+      max_tokens: 6000,
+      temperature: 0.85,
+      response_format: { type: "json_object" },   // Force JSON output
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { 
+          role: 'user', 
+          content: `Story Idea: ${storyPrompt}\nGenre: ${genre}\nDuration: ${duration}\nMood: ${mood}\n\nGenerate the complete cinematic video production package.` 
+        }
+      ]
     })
   })
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}))
-    throw new Error((err as any)?.error?.message || `API error: ${response.status}`)
+    throw new Error(err.error?.message || `API Error: ${response.status}`)
   }
 
   const result = await response.json()
-  const raw: string = (result.content || []).map((c: any) => c.text || '').join('')
-  const clean = raw.replace(/```json|```/g, '').trim()
+  const content = result.choices?.[0]?.message?.content || ''
 
   let data: VideoOutput
   try {
-    data = JSON.parse(clean)
+    data = JSON.parse(content)
   } catch {
-    const match = clean.match(/\{[\s\S]*\}/)
-    if (match) data = JSON.parse(match[0])
-    else throw new Error('Could not parse AI response. Please try again.')
+    // Fallback: try to extract JSON
+    const match = content.match(/\{[\s\S]*\}/)
+    if (match) {
+      data = JSON.parse(match[0])
+    } else {
+      throw new Error('Failed to parse AI response. Please try again.')
+    }
   }
 
   return data

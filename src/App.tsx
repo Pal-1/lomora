@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { generateVideoPackage } from './api'
 import Output from './components/Output'
 import type { VideoOutput } from './types'
@@ -45,12 +45,22 @@ export default function App() {
   const [genre, setGenre] = useState('cinematic drama')
   const [duration, setDuration] = useState('12 minutes')
   const [mood, setMood] = useState('melancholic and haunting')
+  const [apiKey, setApiKey] = useState(localStorage.getItem('anthropic_key') || '')
+  
   const [loading, setLoading] = useState(false)
   const [loadMsg, setLoadMsg] = useState(LOAD_MSGS[0])
   const [error, setError] = useState('')
   const [output, setOutput] = useState<VideoOutput | null>(null)
+
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const outputRef = useRef<HTMLDivElement>(null)
+
+  // Save API key to localStorage
+  useEffect(() => {
+    if (apiKey) {
+      localStorage.setItem('anthropic_key', apiKey)
+    }
+  }, [apiKey])
 
   const startLoad = useCallback(() => {
     let idx = 0
@@ -66,26 +76,31 @@ export default function App() {
   }, [])
 
   const generate = useCallback(async () => {
-    if (!prompt.trim()) return
-    setLoading(true)
-    setError('')
-    setOutput(null)
-    startLoad()
-    try {
-      const data = await generateVideoPackage(prompt, genre, duration, mood)
-      setOutput(data)
-      setTimeout(() => outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
-    } catch (e: any) {
-      setError(e.message || 'Something went wrong. Please try again.')
-    } finally {
-      stopLoad()
-      setLoading(false)
-    }
-  }, [prompt, genre, duration, mood, startLoad, stopLoad])
+  if (!prompt.trim()) return
+  if (!apiKey || !apiKey.startsWith('gsk_')) {
+    setError('Please enter a valid Groq API key (starts with gsk_)')
+    return
+  }
+
+  setLoading(true)
+  setError('')
+  setOutput(null)
+  startLoad()
+
+  try {
+    const data = await generateVideoPackage(prompt, genre, duration, mood, apiKey)
+    setOutput(data)
+    setTimeout(() => outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
+  } catch (e: any) {
+    setError(e.message || 'Something went wrong. Please try again.')
+  } finally {
+    stopLoad()
+    setLoading(false)
+  }
+}, [prompt, genre, duration, mood, apiKey, startLoad, stopLoad])
 
   return (
     <div className={styles.page}>
-
       {/* NAV */}
       <nav className={styles.nav}>
         <div className={styles.logo}>LUMORA<span> Studio</span></div>
@@ -120,8 +135,23 @@ export default function App() {
 
       {/* STUDIO */}
       <main className={styles.studio}>
-
         <div className={styles.sectionLabel} style={{ marginBottom: '1rem' }}>AI Scene Generator</div>
+
+        {/* API KEY INPUT */}
+        <div style={{ marginBottom: '1.5rem' }}>
+          <div className={styles.ctrlLabel}>Anthropic API Key</div>
+          <input
+            type="password"
+            className={styles.textarea}
+            placeholder="gsk_XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            style={{ fontFamily: 'monospace' }}
+          />
+          <small style={{ color: '#888', marginTop: '4px', display: 'block' }}>
+            Saved only in your browser • Never shared with anyone
+          </small>
+        </div>
 
         {/* CONTROLS */}
         <div className={styles.controlsGrid}>
@@ -144,7 +174,7 @@ export default function App() {
           value={prompt}
           onChange={e => setPrompt(e.target.value)}
           onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate() }}
-          placeholder={"Describe your story idea...\n\nExample: A retired soldier returns to the village where he fought 40 years ago. He finds it transformed — children play where battles raged, a café stands where a bunker once was. He meets an old woman who recognises his face. Neither is sure if they were enemies or strangers. As evening falls, they share a meal in silence."}
+          placeholder={"Describe your story idea...\n\nExample: A retired soldier returns to the village where he fought 40 years ago..."}
         />
 
         <div className={styles.actionRow}>
@@ -155,7 +185,11 @@ export default function App() {
           >
             {loading ? '⏳ Generating...' : '✦ Generate My Video'}
           </button>
-          <button className={styles.btnGhost} onClick={() => { setPrompt(''); setOutput(null); setError('') }}>
+          <button className={styles.btnGhost} onClick={() => { 
+            setPrompt(''); 
+            setOutput(null); 
+            setError('') 
+          }}>
             Clear
           </button>
           <span className={styles.hint}><strong>Ctrl+Enter</strong> to generate</span>
@@ -177,7 +211,6 @@ export default function App() {
         <div ref={outputRef}>
           {output && <Output data={output} />}
         </div>
-
       </main>
     </div>
   )
