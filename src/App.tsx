@@ -45,8 +45,8 @@ export default function App() {
   const [genre, setGenre] = useState('cinematic drama')
   const [duration, setDuration] = useState('12 minutes')
   const [mood, setMood] = useState('melancholic and haunting')
-  const [apiKey, setApiKey] = useState(localStorage.getItem('anthropic_key') || '')
-  
+  const [apiKey, setApiKey] = useState(localStorage.getItem('groq_key') || '')
+
   const [loading, setLoading] = useState(false)
   const [loadMsg, setLoadMsg] = useState(LOAD_MSGS[0])
   const [error, setError] = useState('')
@@ -55,11 +55,9 @@ export default function App() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const outputRef = useRef<HTMLDivElement>(null)
 
-  // Save API key to localStorage
+  // Save API key
   useEffect(() => {
-    if (apiKey) {
-      localStorage.setItem('anthropic_key', apiKey)
-    }
+    if (apiKey) localStorage.setItem('groq_key', apiKey)
   }, [apiKey])
 
   const startLoad = useCallback(() => {
@@ -68,7 +66,7 @@ export default function App() {
     timerRef.current = setInterval(() => {
       idx = (idx + 1) % LOAD_MSGS.length
       setLoadMsg(LOAD_MSGS[idx])
-    }, 2000)
+    }, 1800)
   }, [])
 
   const stopLoad = useCallback(() => {
@@ -76,70 +74,59 @@ export default function App() {
   }, [])
 
   const generate = useCallback(async () => {
-  if (!prompt.trim()) return
-  if (!apiKey || !apiKey.startsWith('gsk_')) {
-    setError('Please enter a valid Groq API key (starts with gsk_)')
-    return
-  }
+    if (!prompt.trim()) return
 
-  setLoading(true)
-  setError('')
-  setOutput(null)
-  startLoad()
+    if (!apiKey || !apiKey.startsWith('gsk_')) {
+      setError('Please enter a valid Groq API key (starts with gsk_)')
+      return
+    }
 
-  try {
-    const data = await generateVideoPackage(prompt, genre, duration, mood, apiKey)
-    setOutput(data)
-    setTimeout(() => outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100)
-  } catch (e: any) {
-    setError(e.message || 'Something went wrong. Please try again.')
-  } finally {
-    stopLoad()
-    setLoading(false)
-  }
-}, [prompt, genre, duration, mood, apiKey, startLoad, stopLoad])
+    setLoading(true)
+    setError('')
+    setOutput(null)
+    startLoad()
+
+    try {
+      const data = await generateVideoPackage(prompt, genre, duration, mood, apiKey)
+      setOutput(data)
+      setTimeout(() => {
+        outputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+    } catch (e: any) {
+      setError(e.message || 'Something went wrong. Please try again.')
+    } finally {
+      stopLoad()
+      setLoading(false)
+    }
+  }, [prompt, genre, duration, mood, apiKey, startLoad, stopLoad])
 
   return (
     <div className={styles.page}>
-      {/* NAV */}
       <nav className={styles.nav}>
         <div className={styles.logo}>LUMORA<span> Studio</span></div>
         <div className={styles.navRight}>
-          <span className={styles.navBadge}>4K · AI Video · Monetized</span>
+          <span className={styles.navBadge}>Groq • Fast AI</span>
         </div>
       </nav>
 
-      {/* HERO */}
       <div className={styles.hero}>
-        <div className={styles.heroGrid} />
         <div className={styles.badge}>
-          <div className={styles.bdot} />
-          4K · AI-Generated · Monetization-Ready
+          <div className={styles.bdot} /> 4K • AI Video • Monetization Ready
         </div>
         <h1 className={styles.h1}>
           Tell stories that <em>feel cinematic</em>
         </h1>
         <p className={styles.heroPara}>
-          Generate hyper-realistic 4K storytelling videos 10–15 minutes long with consistent
-          characters and narrative arcs — built for YouTube monetization.
+          Generate hyper-realistic 4K storytelling videos with consistent characters and professional structure.
         </p>
-        <div className={styles.stats}>
-          {[['4K', 'Ultra HD Output'], ['15 min', 'Max Duration'], ['100%', 'Character Consistency'], ['$0', 'To Start']].map(([v, l]) => (
-            <div key={l}>
-              <span className={styles.statV}>{v}</span>
-              <span className={styles.statL}>{l}</span>
-            </div>
-          ))}
-        </div>
       </div>
 
-      {/* STUDIO */}
       <main className={styles.studio}>
-        <div className={styles.sectionLabel} style={{ marginBottom: '1rem' }}>AI Scene Generator</div>
+        <div className={styles.sectionLabel}>AI Scene Generator</div>
 
-        {/* API KEY INPUT */}
+        {/* Groq API Key Input */}
         <div style={{ marginBottom: '1.5rem' }}>
-          <div className={styles.ctrlLabel}>Anthropic API Key</div>
+          <div className={styles.ctrlLabel}>Groq API Key</div>
           <input
             type="password"
             className={styles.textarea}
@@ -149,21 +136,22 @@ export default function App() {
             style={{ fontFamily: 'monospace' }}
           />
           <small style={{ color: '#888', marginTop: '4px', display: 'block' }}>
-            Saved only in your browser • Never shared with anyone
+            Get free key from console.groq.com • Saved only in your browser
           </small>
         </div>
 
-        {/* CONTROLS */}
         <div className={styles.controlsGrid}>
           {([
             ['Genre', genre, setGenre, GENRES],
             ['Duration', duration, setDuration, DURATIONS],
             ['Mood', mood, setMood, MOODS],
-          ] as [string, string, (v: string) => void, string[][]][]).map(([label, val, setter, opts]) => (
+          ] as const).map(([label, val, setter, opts]) => (
             <div key={label}>
               <div className={styles.ctrlLabel}>{label}</div>
               <select className={styles.select} value={val} onChange={e => setter(e.target.value)}>
-                {opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                {opts.map(([v, l]) => (
+                  <option key={v} value={v}>{l}</option>
+                ))}
               </select>
             </div>
           ))}
@@ -173,41 +161,38 @@ export default function App() {
           className={styles.textarea}
           value={prompt}
           onChange={e => setPrompt(e.target.value)}
-          onKeyDown={e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate() }}
-          placeholder={"Describe your story idea...\n\nExample: A retired soldier returns to the village where he fought 40 years ago..."}
+          placeholder="Describe your story idea here...\n\nExample: A retired soldier returns to his old village after 40 years..."
+          onKeyDown={e => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate()
+          }}
         />
 
         <div className={styles.actionRow}>
           <button
             className={styles.btnGold}
             onClick={generate}
-            disabled={loading || !prompt.trim()}
+            disabled={loading || !prompt.trim() || !apiKey}
           >
-            {loading ? '⏳ Generating...' : '✦ Generate My Video'}
+            {loading ? '⏳ Generating Cinematic Package...' : '✦ Generate My Video'}
           </button>
-          <button className={styles.btnGhost} onClick={() => { 
-            setPrompt(''); 
-            setOutput(null); 
-            setError('') 
+          <button className={styles.btnGhost} onClick={() => {
+            setPrompt('')
+            setOutput(null)
+            setError('')
           }}>
             Clear
           </button>
-          <span className={styles.hint}><strong>Ctrl+Enter</strong> to generate</span>
         </div>
 
-        {/* LOADER */}
         {loading && (
           <div className={styles.loader}>
             <div className={styles.spinner} />
             <div className={styles.loadTxt}>{loadMsg}</div>
-            <div className={styles.loadSub}>Building scenes · Writing script · Locking characters</div>
           </div>
         )}
 
-        {/* ERROR */}
         {error && <div className={styles.errorBox}>⚠ {error}</div>}
 
-        {/* OUTPUT */}
         <div ref={outputRef}>
           {output && <Output data={output} />}
         </div>

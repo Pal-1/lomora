@@ -28,7 +28,7 @@ Use exactly this structure:
   "publishingTip": "2-3 sentences"
 }
 
-Rules: 6-8 scenes, script for first 3 minutes (8-12 blocks), 8-10 shots, 2-4 characters. Make it cinematic and professional.`;
+Rules: 6-8 scenes, 8-12 script blocks, 8-10 shots, 2-4 characters. Make it cinematic.`;
 
 export async function generateVideoPackage(
   storyPrompt: string,
@@ -38,8 +38,8 @@ export async function generateVideoPackage(
   apiKey: string
 ): Promise<VideoOutput> {
   
-  if (!apiKey || apiKey.length < 20) {
-    throw new Error('Please enter a valid Groq API key')
+  if (!apiKey || !apiKey.startsWith('gsk_')) {
+    throw new Error('Please enter a valid Groq API key (starts with gsk_)')
   }
 
   const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -49,15 +49,15 @@ export async function generateVideoPackage(
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'llama-3.3-70b-versatile',     // Best balance for creative cinematic output
+      model: 'llama-3.3-70b-versatile',
       max_tokens: 6000,
       temperature: 0.85,
-      response_format: { type: "json_object" },   // Force JSON output
+      response_format: { type: "json_object" },
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { 
           role: 'user', 
-          content: `Story Idea: ${storyPrompt}\nGenre: ${genre}\nDuration: ${duration}\nMood: ${mood}\n\nGenerate the complete cinematic video production package.` 
+          content: `Story Idea: ${storyPrompt}\nGenre: ${genre}\nDuration: ${duration}\nMood: ${mood}\n\nGenerate full cinematic video package.` 
         }
       ]
     })
@@ -65,7 +65,7 @@ export async function generateVideoPackage(
 
   if (!response.ok) {
     const err = await response.json().catch(() => ({}))
-    throw new Error(err.error?.message || `API Error: ${response.status}`)
+    throw new Error(err.error?.message || `Groq API Error: ${response.status}`)
   }
 
   const result = await response.json()
@@ -75,13 +75,9 @@ export async function generateVideoPackage(
   try {
     data = JSON.parse(content)
   } catch {
-    // Fallback: try to extract JSON
     const match = content.match(/\{[\s\S]*\}/)
-    if (match) {
-      data = JSON.parse(match[0])
-    } else {
-      throw new Error('Failed to parse AI response. Please try again.')
-    }
+    if (match) data = JSON.parse(match[0])
+    else throw new Error('Failed to parse response. Try again.')
   }
 
   return data
