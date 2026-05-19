@@ -1,0 +1,130 @@
+.page { background: var(--black); color: var(--white); min-height: 100vh; }
+
+/* NAV */
+.nav {
+  position: sticky; top: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.9rem 2rem;
+  background: rgba(10,9,8,0.92);
+  backdrop-filter: blur(14px);
+  border-bottom: 0.5px solid var(--border);
+}
+.logo { font-family: var(--font-display); font-size: 1.4rem; font-weight: 600; letter-spacing: 0.12em; color: var(--gold); }
+.logo span { color: var(--white); font-weight: 300; }
+.navRight { display: flex; align-items: center; gap: 1.5rem; }
+.navBadge { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--gold-dim); }
+
+/* HERO */
+.hero {
+  padding: 3.5rem 2rem 2.5rem;
+  text-align: center;
+  border-bottom: 0.5px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.heroGrid {
+  position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(201,168,76,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(201,168,76,0.04) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 50%, black 20%, transparent 100%);
+  pointer-events: none;
+}
+.badge {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  border: 0.5px solid var(--brite);
+  padding: 0.28rem 0.9rem; border-radius: 100px;
+  font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 1.2rem; font-family: var(--font-mono);
+}
+.bdot { width: 5px; height: 5px; background: var(--gold); border-radius: 50%; animation: pulse 2s infinite; }
+.h1 { font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3.4rem); font-weight: 300; line-height: 1.1; margin-bottom: 0.9rem; }
+.h1 em { font-style: italic; color: var(--gold); }
+.heroPara { color: var(--dim); max-width: 460px; margin: 0 auto 1.5rem; font-size: 0.88rem; }
+.stats { display: flex; gap: 2.2rem; justify-content: center; flex-wrap: wrap; padding-top: 1.5rem; border-top: 0.5px solid var(--border); }
+.statV { font-family: var(--font-display); font-size: 1.7rem; font-weight: 600; color: var(--gold); display: block; }
+.statL { font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-family: var(--font-mono); }
+
+/* STUDIO */
+.studio { max-width: 860px; margin: 0 auto; padding: 2rem 1.5rem 5rem; }
+.sectionLabel { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-dim); margin-bottom: 0.5rem; }
+.divider { height: 0.5px; background: var(--border); margin: 1.75rem 0; }
+
+/* API KEY */
+.apiSection { margin-bottom: 0.5rem; }
+.apiRow { display: flex; gap: 0.6rem; margin: 0.5rem 0 0.5rem; }
+.apiInput {
+  flex: 1; background: var(--s1); color: var(--white);
+  border: 0.5px solid var(--border); padding: 0.55rem 0.75rem;
+  font-family: var(--font-mono); font-size: 0.82rem; border-radius: 2px; outline: none;
+  transition: border-color 0.2s;
+}
+.apiInput:focus { border-color: var(--brite); }
+.showBtn {
+  background: transparent; color: var(--dim); border: 0.5px solid var(--border);
+  padding: 0.55rem 1rem; font-family: var(--font-body); font-size: 0.75rem;
+  cursor: pointer; border-radius: 2px; transition: color 0.2s, border-color 0.2s;
+}
+.showBtn:hover { color: var(--gold); border-color: var(--brite); }
+.apiHint { font-size: 0.75rem; color: var(--muted); }
+.apiLink { color: var(--gold); text-decoration: none; }
+.apiLink:hover { text-decoration: underline; }
+
+/* CONTROLS */
+.controlsGrid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0.75rem; margin-bottom: 0.9rem; }
+@media (max-width: 600px) { .controlsGrid { grid-template-columns: 1fr 1fr; } }
+.ctrlLabel { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem; }
+.select {
+  width: 100%; background: var(--s1); color: var(--white);
+  border: 0.5px solid var(--border); padding: 0.5rem 0.7rem;
+  font-family: var(--font-body); font-size: 0.82rem; border-radius: 2px; outline: none; cursor: pointer;
+  transition: border-color 0.2s;
+}
+.select:focus { border-color: var(--brite); }
+
+.textarea {
+  width: 100%; background: var(--s1); border: 0.5px solid var(--border);
+  border-radius: 3px; color: var(--white); font-family: var(--font-body);
+  font-size: 0.9rem; padding: 1rem; resize: vertical; min-height: 130px;
+  outline: none; transition: border-color 0.2s; line-height: 1.7;
+}
+.textarea:focus { border-color: var(--brite); }
+.textarea::placeholder { color: var(--muted); }
+
+/* ACTIONS */
+.actionRow { display: flex; gap: 0.75rem; align-items: center; margin-top: 0.85rem; flex-wrap: wrap; }
+.btnGold {
+  background: var(--gold); color: var(--black); border: none;
+  padding: 0.75rem 1.75rem; font-family: var(--font-body); font-size: 0.8rem;
+  font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+  cursor: pointer; border-radius: 2px; transition: background 0.2s, transform 0.15s;
+}
+.btnGold:hover:not(:disabled) { background: var(--gold-light); transform: translateY(-1px); }
+.btnGold:disabled { opacity: 0.45; cursor: not-allowed; }
+.btnGhost {
+  background: transparent; color: var(--dim); border: 0.5px solid var(--border);
+  padding: 0.75rem 1.25rem; font-family: var(--font-body); font-size: 0.78rem;
+  cursor: pointer; border-radius: 2px; transition: border-color 0.2s, color 0.2s;
+}
+.btnGhost:hover { border-color: var(--brite); color: var(--white); }
+.hint { font-family: var(--font-mono); font-size: 0.62rem; color: var(--muted); }
+.hint strong { color: var(--gold); }
+
+/* LOADER */
+.loader { text-align: center; padding: 3rem 2rem; }
+.spinner {
+  width: 44px; height: 44px;
+  border: 1.5px solid var(--border);
+  border-top-color: var(--gold);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1.2rem;
+}
+.loadTxt { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.15em; color: var(--gold); text-transform: uppercase; }
+.loadSub { font-size: 0.74rem; color: var(--muted); margin-top: 0.4rem; }
+
+/* ERROR */
+.errorBox {
+  border: 0.5px solid rgba(201,76,76,0.4); border-radius: 4px;
+  padding: 1rem 1.3rem; background: rgba(201,76,76,0.06);
+  color: #E8A0A0; font-size: 0.83rem; margin-top: 1.25rem;
+}
